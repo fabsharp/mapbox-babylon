@@ -52,14 +52,17 @@
         },
         onAdd: function(map, gl) {
             this.engine = new BABYLON.Engine(gl, true, {
-                doNotHandleTouchAction : true,
+                doNotHandleTouchAction : false,
                 preserveDrawingBuffer : true,
             });
+            this.engine.resize();
             this.scene = this._createScene();
             this.scene.autoClear = false;
+            this.scene.detachControl();
             this.map = map;
         },
         render: function(gl, matrix) {
+            this.engine.resize();
             this.scene.render();
             this.engine.wipeCaches(true);
             this.map.triggerRepaint();
