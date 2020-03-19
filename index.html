@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>BABYLON Layer for MapBox</title>
+    <link rel="stylesheet" href="./node_modules/mapbox-gl/dist/mapbox-gl.css">
+    <style>
+        #map {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+<div id="map"></div>
+
+<script src="./node_modules/mapbox-gl/dist/mapbox-gl-dev.js"></script>
+<script src="./node_modules/babylonjs/babylon.js"></script>
+<script>
+    mapboxgl.accessToken = 'pk.eyJ1IjoiZmFic2hhcnAiLCJhIjoiY2pkb2JmaHZ2MG5laTMycXV6MW9hbnR6biJ9.UMH3HUf54_y7l-2YpeE8oA';
+
+    let map = (window.map = new mapboxgl.Map({
+        container: 'map',
+        style: 'mapbox://styles/fabsharp/ck7g13iiy0mcc1ilfhg7qp4dr',
+        zoom: 18 ,
+        center : [2.2954441, 48.8737674],
+        pitch: 60,
+        antialias: true
+    }));
+
+    let customLayer = {
+        id: '3d-model',
+        type: 'custom',
+        renderingMode: '3d',
+        _createScene() {
+            let scene = new BABYLON.Scene(this.engine);
+            let camera = new BABYLON.FreeCamera('camera', new BABYLON.Vector3(0, 5,-10), scene);
+            camera.setTarget(BABYLON.Vector3.Zero());
+            // camera.attachControl(this.gl.canvas, false);
+            let light = new BABYLON.HemisphericLight('light1', new BABYLON.Vector3(0,1,0), scene);
+            let sphere = BABYLON.MeshBuilder.CreateSphere('sphere', {segments:16, diameter:2}, scene);
+            let ground = BABYLON.MeshBuilder.CreateGround('ground1', {height:6, width:6, subdivisions: 2}, scene);
+            return scene;
+        },
+        onAdd: function(map, gl) {
+            this.engine = new BABYLON.Engine(gl, true, {
+                doNotHandleTouchAction : true,
+                preserveDrawingBuffer : true,
+            });
+            this.scene = this._createScene();
+            this.scene.autoClear = false;
+            this.map = map;
+        },
+        render: function(gl, matrix) {
+            this.scene.render();
+            this.engine.wipeCaches(true);
+            this.map.triggerRepaint();
+        }
+    };
+
+    map.on("load", function() {
+        map.addLayer(customLayer, "building")
+    });
+</script>
+</body>
+</html>
