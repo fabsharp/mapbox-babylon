@@ -6,11 +6,6 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "devDependencies": {
-
-  },
-  "dependencies": {
-    "babylonjs": "^4.1.0",
-    "babylonjs-loaders": "^4.1.0",
-    "mapbox-gl": "^1.9.1"}
+  "devDependencies": { },
+  "dependencies": { }
 }
