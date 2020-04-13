@@ -5,5 +5,11 @@
   "scripts": {},
   "keywords": [],
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "babylonjs": "^4.1.0",
+    "babylonjs-loaders": "^4.1.0",
+    "mapbox-gl": "^1.9.1"
+  },
+  "dependencies": {}
 }

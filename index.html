@@ -3,8 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <title>BABYLON Layer for MapBox</title>
-    <link href='https://api.mapbox.com/mapbox-gl-js/v1.8.1/mapbox-gl.css' rel='stylesheet' />
+    <link href='node_modules/mapbox-gl/dist/mapbox-gl.css' rel='stylesheet' />
     <style>
+        html, body {
+            overflow: hidden;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
         #map {
             position: absolute;
             top: 0;
@@ -16,9 +24,9 @@
 <body>
 <div id="map"></div>
 
-<script src='https://api.mapbox.com/mapbox-gl-js/v1.8.1/mapbox-gl-dev.js'></script>
-<script src="https://cdn.babylonjs.com/babylon.js"></script>
-
+<script src='node_modules/mapbox-gl/dist/mapbox-gl-dev.js'></script>
+<script src="node_modules/babylonjs/babylon.js"></script>
+<script src="node_modules/babylonjs-loaders/babylonjs.loaders.min.js"></script>
 <script>
     /**
      * We want to replace the Three renderer by Babylon in this example :
@@ -27,44 +35,61 @@
 
     mapboxgl.accessToken = 'pk.eyJ1IjoiZmFic2hhcnAiLCJhIjoiY2pkb2JmaHZ2MG5laTMycXV6MW9hbnR6biJ9.UMH3HUf54_y7l-2YpeE8oA';
 
+    let center =  [148.9819, -35.3981]
     let map = (window.map = new mapboxgl.Map({
         container: 'map',
-        style: 'mapbox://styles/fabsharp/ck7g13iiy0mcc1ilfhg7qp4dr',
+        style: 'mapbox://styles/mapbox/light-v10',
         zoom: 18 ,
-        center : [2.2954441, 48.8737674],
+        center : center,
         pitch: 60,
         antialias: true
     }));
+
+
+
+    let world;
+
+    const computeWorld = () => {
+        let rotateX = Math.PI / 2, rotateY = 0, rotateZ = 0;
+
+        let mercatorCoordinate = mapboxgl.MercatorCoordinate.fromLngLat(
+            [148.9819, -35.39847],
+            0
+        );
+
+        world = BABYLON.Matrix.Identity().setTranslationFromFloats(mercatorCoordinate.x, mercatorCoordinate.y, mercatorCoordinate.z);
+        let scaleFactor = mercatorCoordinate.meterInMercatorCoordinateUnits();
+        let scale = BABYLON.Matrix.Scaling( scaleFactor, -scaleFactor, scaleFactor);
+        world = scale.multiply(world);
+        world = BABYLON.Matrix.RotationX(rotateX).multiply(world);
+        world = BABYLON.Matrix.RotationY(rotateY).multiply(world);
+        world = BABYLON.Matrix.RotationZ(rotateZ).multiply(world);
+    };
 
     let customLayer = {
         id: '3d-model',
         type: 'custom',
         renderingMode: '3d',
-        _createScene() {
-            let scene = new BABYLON.Scene(this.engine);
-            let camera = new BABYLON.FreeCamera('camera', new BABYLON.Vector3(0, 5,-10), scene);
-            camera.setTarget(BABYLON.Vector3.Zero());
-            // camera.attachControl(this.gl.canvas, false);
-            let light = new BABYLON.HemisphericLight('light1', new BABYLON.Vector3(0,1,0), scene);
-            let sphere = BABYLON.MeshBuilder.CreateSphere('sphere', {segments:16, diameter:2}, scene);
-            let ground = BABYLON.MeshBuilder.CreateGround('ground1', {height:6, width:6, subdivisions: 2}, scene);
-            return scene;
-        },
         onAdd: function(map, gl) {
-            this.engine = new BABYLON.Engine(gl, true, {
-                doNotHandleTouchAction : false,
-                preserveDrawingBuffer : true,
-            });
-            this.engine.resize();
-            this.scene = this._createScene();
-            this.scene.autoClear = false;
-            this.scene.detachControl();
             this.map = map;
+            this.engine = new BABYLON.Engine(gl, true);
+            window.dispatchEvent(new Event('resize'));
+            computeWorld();
+            BABYLON.SceneLoader.Load("https://docs.mapbox.com/mapbox-gl-js/assets/34M_17/", "34M_17.gltf", this.engine,
+                 (scene) => {
+                     this.scene = scene;
+                     this.scene.activeCamera = new BABYLON.Camera('mapboxCamera', new BABYLON.Vector3(), this.scene);
+                     this.scene.autoClear = false;
+                     this.scene.detachControl();
+                });
         },
         render: function(gl, matrix) {
-            this.engine.resize();
-            this.scene.render();
-            this.engine.wipeCaches(true);
+            if(this.scene) {
+                let projection = BABYLON.Matrix.FromArray(matrix);
+                this.scene.activeCamera.freezeProjectionMatrix(world.multiply(projection));
+                this.scene.render(false);
+                this.engine.wipeCaches(true);
+            }
             this.map.triggerRepaint();
         }
     };
