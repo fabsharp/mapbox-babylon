@@ -59,12 +59,15 @@
         onAdd: function(map, gl) {
             this.map = map;
             this.engine = new BABYLON.Engine(gl, true);
+            // the only way i found to resize the engine correctly...
             window.dispatchEvent(new Event('resize'));
-            computeWorld();
             BABYLON.SceneLoader.Load("https://docs.mapbox.com/mapbox-gl-js/assets/34M_17/", "34M_17.gltf", this.engine,
                  (scene) => {
+                     computeWorld();
                      this.scene = scene;
                      this.scene.activeCamera = new BABYLON.Camera('mapboxCamera', new BABYLON.Vector3(), this.scene);
+                     new BABYLON.DirectionalLight("DirectionalLight", new BABYLON.Vector3(0, -70, 100), this.scene);
+                     new BABYLON.DirectionalLight("DirectionalLight2", new BABYLON.Vector3(0, 70, 100), this.scene);
                      this.scene.autoClear = false;
                      this.scene.detachControl();
                 });
@@ -74,6 +77,7 @@
                 let projection = BABYLON.Matrix.FromArray(matrix);
                 projection._m = matrix;
                 this.scene.activeCamera.freezeProjectionMatrix(world.multiply(projection));
+
                 this.scene.render(false);
                 this.engine.wipeCaches(true);
             }
