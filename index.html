@@ -25,16 +25,9 @@
 <div id="map"></div>
 <script src='https://api.mapbox.com/mapbox-gl-js/v1.8.1/mapbox-gl-dev.js'></script>
 <script src="https://cdn.babylonjs.com/babylon.js"></script>
-
 <script src="https://cdn.jsdelivr.net/npm/babylonjs-loaders@4.1.0/babylonjs.loaders.js"></script>
 <script>
-    /**
-     * We want to replace the Three renderer by Babylon in this example :
-     * https://docs.mapbox.com/mapbox-gl-js/example/add-3d-model/
-     */
-
     mapboxgl.accessToken = 'pk.eyJ1IjoiZmFic2hhcnAiLCJhIjoiY2pkb2JmaHZ2MG5laTMycXV6MW9hbnR6biJ9.UMH3HUf54_y7l-2YpeE8oA';
-
     let center =  [148.9819, -35.3981]
     let map = (window.map = new mapboxgl.Map({
         container: 'map',
@@ -44,19 +37,13 @@
         pitch: 60,
         antialias: true
     }));
-
-
-
     let world;
-
     const computeWorld = () => {
         let rotateX = Math.PI / 2, rotateY = 0, rotateZ = 0;
-
         let mercatorCoordinate = mapboxgl.MercatorCoordinate.fromLngLat(
             [148.9819, -35.39847],
             0
         );
-
         world = BABYLON.Matrix.Identity().setTranslationFromFloats(mercatorCoordinate.x, mercatorCoordinate.y, mercatorCoordinate.z);
         let scaleFactor = mercatorCoordinate.meterInMercatorCoordinateUnits();
         let scale = BABYLON.Matrix.Scaling( scaleFactor, -scaleFactor, scaleFactor);
@@ -65,7 +52,6 @@
         world = BABYLON.Matrix.RotationY(rotateY).multiply(world);
         world = BABYLON.Matrix.RotationZ(rotateZ).multiply(world);
     };
-
     let customLayer = {
         id: '3d-model',
         type: 'custom',
@@ -86,6 +72,7 @@
         render: function(gl, matrix) {
             if(this.scene) {
                 let projection = BABYLON.Matrix.FromArray(matrix);
+                projection._m = matrix;
                 this.scene.activeCamera.freezeProjectionMatrix(world.multiply(projection));
                 this.scene.render(false);
                 this.engine.wipeCaches(true);
@@ -93,7 +80,6 @@
             this.map.triggerRepaint();
         }
     };
-
     map.on("load", function() {
         map.addLayer(customLayer, "building")
     });
